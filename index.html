@@ -1,0 +1,1051 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>F1 Clicker — Чиби Гонщики</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Comic Sans MS', 'Trebuchet MS', sans-serif;
+    background: linear-gradient(135deg, #0b1e3f 0%, #1a3a6e 50%, #2d5aa0 100%);
+    color: #e0f2ff;
+    min-height: 100vh;
+    overflow-x: hidden;
+    padding: 20px;
+  }
+  h1 {
+    text-align: center;
+    color: #a8d8ff;
+    text-shadow: 0 0 15px #4a90e2, 0 2px 4px #000;
+    font-size: 2.2em;
+    margin-bottom: 10px;
+    letter-spacing: 2px;
+  }
+  .counter {
+    text-align: center;
+    font-size: 1.8em;
+    color: #ffd86b;
+    text-shadow: 0 0 10px #ffb300, 0 2px 3px #000;
+    margin-bottom: 20px;
+  }
+  .counter .coin-icon {
+    display: inline-block;
+    width: 30px; height: 30px;
+    background: radial-gradient(circle at 30% 30%, #fff3a0, #ffd86b 50%, #c99100);
+    border-radius: 50%;
+    border: 2px solid #8a6500;
+    vertical-align: middle;
+    margin-right: 8px;
+    box-shadow: 0 0 12px #ffd86b;
+  }
+  .layout {
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    gap: 20px;
+    max-width: 1300px;
+    margin: 0 auto;
+  }
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: 1fr; }
+  }
+  .click-area {
+    background: linear-gradient(180deg, #1e3c72 0%, #2a5298 100%);
+    border: 3px solid #5aa9ff;
+    border-radius: 20px;
+    padding: 20px;
+    box-shadow: 0 0 30px rgba(90, 169, 255, 0.4), inset 0 0 40px rgba(0,0,0,0.3);
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    min-height: 520px;
+  }
+  .current-name {
+    font-size: 1.6em;
+    color: #a8d8ff;
+    margin-bottom: 6px;
+    text-shadow: 0 0 8px #4a90e2;
+  }
+  .per-click {
+    font-size: 1em;
+    color: #ffd86b;
+    margin-bottom: 12px;
+  }
+  .scene {
+    width: 100%;
+    max-width: 420px;
+    aspect-ratio: 1 / 1;
+    margin: 0 auto;
+    cursor: pointer;
+    transition: transform 0.1s;
+    user-select: none;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  }
+  .scene:active { transform: scale(0.97); }
+  .scene.bounce { animation: bounce 0.3s; }
+  @keyframes bounce {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05) translateY(-8px); }
+    100% { transform: scale(1); }
+  }
+  .float-coin {
+    position: absolute;
+    pointer-events: none;
+    font-size: 1.4em;
+    font-weight: bold;
+    color: #ffd86b;
+    text-shadow: 0 0 8px #ffb300, 0 2px 2px #000;
+    animation: floatUp 1s ease-out forwards;
+  }
+  @keyframes floatUp {
+    0% { opacity: 1; transform: translateY(0) scale(1); }
+    100% { opacity: 0; transform: translateY(-120px) scale(1.5); }
+  }
+  
+  .shop {
+    background: linear-gradient(180deg, #0f1e3f 0%, #1a2e5a 100%);
+    border: 3px solid #5aa9ff;
+    border-radius: 20px;
+    padding: 20px;
+    box-shadow: 0 0 25px rgba(90, 169, 255, 0.3), inset 0 0 30px rgba(0,0,0,0.2);
+    max-height: 85vh;
+    overflow-y: auto;
+  }
+  .shop::-webkit-scrollbar { width: 8px; }
+  .shop::-webkit-scrollbar-track { background: #0b1e3f; border-radius: 4px; }
+  .shop::-webkit-scrollbar-thumb { background: #5aa9ff; border-radius: 4px; }
+  .shop::-webkit-scrollbar-thumb:hover { background: #7ac0ff; }
+  
+  .shop h2 {
+    text-align: center;
+    color: #a8d8ff;
+    margin-bottom: 20px;
+    text-shadow: 0 0 10px #4a90e2;
+    font-size: 1.5em;
+    letter-spacing: 1px;
+    position: relative;
+    padding-bottom: 10px;
+  }
+  .shop h2::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 20%;
+    right: 20%;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, #5aa9ff, transparent);
+  }
+  
+  .driver-card {
+    background: linear-gradient(135deg, #1a2e5a 0%, #0f1e3f 100%);
+    border: 2px solid #3a5a8a;
+    border-radius: 15px;
+    padding: 12px;
+    margin-bottom: 12px;
+    display: grid;
+    grid-template-columns: 80px 1fr auto;
+    gap: 12px;
+    align-items: center;
+    transition: all 0.3s;
+    position: relative;
+    overflow: hidden;
+  }
+  .driver-card::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(45deg, transparent, rgba(90, 169, 255, 0.1), transparent);
+    transform: rotate(45deg);
+    transition: all 0.5s;
+  }
+  .driver-card:hover::before {
+    left: 100%;
+  }
+  .driver-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(90, 169, 255, 0.3);
+  }
+  .driver-card.active {
+    border-color: #ffd86b;
+    box-shadow: 0 0 20px rgba(255, 216, 107, 0.5), inset 0 0 20px rgba(255, 216, 107, 0.1);
+    background: linear-gradient(135deg, #2a3e6a 0%, #1a2e5a 100%);
+  }
+  .driver-card.active::after {
+    content: '★';
+    position: absolute;
+    top: 5px;
+    right: 10px;
+    color: #ffd86b;
+    font-size: 1.2em;
+    text-shadow: 0 0 8px #ffd86b;
+  }
+  .driver-card.owned {
+    border-color: #66d9a0;
+    background: linear-gradient(135deg, #1a3a4a 0%, #0f2a3a 100%);
+  }
+  
+  .mini-scene {
+    width: 80px; height: 80px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 3px solid #5aa9ff;
+    background: #0b1e3f;
+    box-shadow: 0 0 10px rgba(90, 169, 255, 0.4);
+    transition: all 0.3s;
+  }
+  .driver-card:hover .mini-scene {
+    transform: scale(1.05);
+    box-shadow: 0 0 15px rgba(90, 169, 255, 0.6);
+  }
+  .driver-card.active .mini-scene {
+    border-color: #ffd86b;
+    box-shadow: 0 0 15px rgba(255, 216, 107, 0.6);
+  }
+  .mini-scene svg { width: 100%; height: 100%; display: block; }
+  
+  .driver-info {
+    font-size: 0.95em;
+    position: relative;
+    z-index: 1;
+  }
+  .driver-info .name {
+    color: #e0f2ff;
+    font-weight: bold;
+    font-size: 1.05em;
+    margin-bottom: 4px;
+  }
+  .driver-info .stats {
+    color: #a8d8ff;
+    font-size: 0.9em;
+    margin-bottom: 3px;
+  }
+  .driver-info .price {
+    color: #ffd86b;
+    font-size: 0.9em;
+    font-weight: bold;
+  }
+  
+  .buy-btn {
+    background: linear-gradient(180deg, #4a90e2 0%, #2a5aa0 100%);
+    color: white;
+    border: 2px solid #a8d8ff;
+    padding: 10px 14px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-family: inherit;
+    font-weight: bold;
+    font-size: 0.9em;
+    transition: all 0.3s;
+    white-space: nowrap;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.3);
+    position: relative;
+    z-index: 1;
+  }
+  .buy-btn:hover:not(:disabled) {
+    background: linear-gradient(180deg, #5aa9ff 0%, #3a6ab0 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(90, 169, 255, 0.5);
+  }
+  .buy-btn:active:not(:disabled) {
+    transform: translateY(0);
+  }
+  .buy-btn:disabled {
+    background: linear-gradient(180deg, #2a2a3a 0%, #1a1a2a 100%);
+    border-color: #3a3a4a;
+    color: #6a6a7a;
+    cursor: not-allowed;
+    box-shadow: none;
+  }
+  .buy-btn.select {
+    background: linear-gradient(180deg, #66d9a0 0%, #3a9a70 100%);
+    border-color: #a8ffcc;
+  }
+  .buy-btn.select:hover:not(:disabled) {
+    background: linear-gradient(180deg, #7aeab0 0%, #4aaa80 100%);
+    box-shadow: 0 5px 15px rgba(102, 217, 160, 0.5);
+  }
+  .buy-btn.selected {
+    background: linear-gradient(180deg, #ffd86b 0%, #c99100 100%);
+    border-color: #fff3a0;
+    color: #3a2a00;
+  }
+  
+  .reset-btn {
+    display: block;
+    margin: 20px auto 0;
+    background: transparent;
+    border: 2px solid #5aa9ff;
+    color: #a8d8ff;
+    padding: 8px 18px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 0.85em;
+    transition: all 0.3s;
+  }
+  .reset-btn:hover {
+    background: rgba(90, 169, 255, 0.15);
+    border-color: #7ac0ff;
+    color: #c0e8ff;
+  }
+</style>
+</head>
+<body>
+
+<h1>🏁 F1 ЧИБИ КЛИКЕР 🏁</h1>
+<div class="counter">
+  <span class="coin-icon"></span>
+  <span id="coinCount">0</span> монеток
+</div>
+
+<div class="layout">
+  <div class="click-area" id="clickArea">
+    <div class="current-name" id="currentName">Макс Ферстаппен</div>
+    <div class="per-click" id="perClick">+1 монетка за клик</div>
+    <div id="sceneContainer"></div>
+  </div>
+
+  <div class="shop">
+    <h2>🛒 Магазин гонщиков</h2>
+    <div id="shopList"></div>
+    <button class="reset-btn" onclick="resetGame()">Сбросить прогресс</button>
+  </div>
+</div>
+
+<script>
+/* =========================================================
+   ФОНОВАЯ СЦЕНА + ДЕРЕВО для каждого гонщика
+   ========================================================= */
+function backgroundScene(id) {
+  switch(id) {
+    case 'verstappen': return `
+      <defs>
+        <linearGradient id="skyVerst" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#0a0a2a"/>
+          <stop offset="60%" stop-color="#1a1a4a"/>
+          <stop offset="100%" stop-color="#ff6b1a" stop-opacity="0.4"/>
+        </linearGradient>
+      </defs>
+      <rect x="0" y="0" width="400" height="260" fill="url(#skyVerst)"/>
+      <circle cx="40" cy="40" r="1.5" fill="#fff"/>
+      <circle cx="120" cy="60" r="1" fill="#fff"/>
+      <circle cx="200" cy="30" r="1.5" fill="#fff"/>
+      <circle cx="280" cy="50" r="1" fill="#fff"/>
+      <circle cx="350" cy="70" r="1.5" fill="#fff"/>
+      <circle cx="80" cy="90" r="1" fill="#fff"/>
+      <circle cx="320" cy="110" r="1" fill="#fff"/>
+      <rect x="0" y="200" width="400" height="60" fill="#1a1a3a"/>
+      <rect x="0" y="210" width="400" height="4" fill="#ff6b1a" opacity="0.6"/>
+      <rect x="0" y="225" width="400" height="4" fill="#ff6b1a" opacity="0.4"/>
+      ${[20,60,100,140,180,220,260,300,340,380].map(x => `<circle cx="${x}" cy="215" r="2" fill="#ffd86b" opacity="0.8"/>`).join('')}
+      <rect x="0" y="260" width="400" height="140" fill="#1a1a2a"/>
+      <rect x="0" y="340" width="400" height="4" fill="#fff" opacity="0.5"/>
+      ${[30,110,190,270,350].map(x => `<rect x="${x}" y="370" width="40" height="6" fill="#fff" opacity="0.7"/>`).join('')}
+      <rect x="0" y="255" width="400" height="8" fill="#c02020"/>
+      <rect x="0" y="255" width="400" height="2" fill="#ff4040"/>
+      <rect x="330" y="150" width="10" height="110" fill="#2a3a1a"/>
+      <ellipse cx="335" cy="140" rx="18" ry="30" fill="#1a4a1a" stroke="#0a2a0a" stroke-width="1.5"/>
+      <ellipse cx="335" cy="115" rx="14" ry="22" fill="#2a5a2a" stroke="#0a2a0a" stroke-width="1.5"/>
+      <ellipse cx="335" cy="95" rx="10" ry="16" fill="#1a4a1a" stroke="#0a2a0a" stroke-width="1.5"/>
+      <rect x="50" y="160" width="8" height="100" fill="#2a3a1a"/>
+      <ellipse cx="54" cy="150" rx="15" ry="25" fill="#1a4a1a" stroke="#0a2a0a" stroke-width="1.5"/>
+      <ellipse cx="54" cy="130" rx="11" ry="18" fill="#2a5a2a" stroke="#0a2a0a" stroke-width="1.5"/>
+    `;
+
+    case 'norris': return `
+      <defs>
+        <linearGradient id="skyNorris" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#ffb070"/>
+          <stop offset="50%" stop-color="#ff8c42"/>
+          <stop offset="100%" stop-color="#ffd86b"/>
+        </linearGradient>
+        <linearGradient id="seaNorris" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#4ab8d8"/>
+          <stop offset="100%" stop-color="#2a7aa0"/>
+        </linearGradient>
+      </defs>
+      <rect x="0" y="0" width="400" height="200" fill="url(#skyNorris)"/>
+      <circle cx="300" cy="130" r="40" fill="#fff3a0" opacity="0.9"/>
+      <circle cx="300" cy="130" r="55" fill="#ffd86b" opacity="0.3"/>
+      <ellipse cx="80" cy="60" rx="35" ry="10" fill="#fff" opacity="0.7"/>
+      <ellipse cx="220" cy="40" rx="45" ry="12" fill="#fff" opacity="0.6"/>
+      <rect x="0" y="200" width="400" height="60" fill="url(#seaNorris)"/>
+      <path d="M 0 220 Q 50 215 100 220 T 200 220 T 300 220 T 400 220" stroke="#fff" stroke-width="1.5" fill="none" opacity="0.5"/>
+      <path d="M 0 240 Q 50 235 100 240 T 200 240 T 300 240 T 400 240" stroke="#fff" stroke-width="1.5" fill="none" opacity="0.4"/>
+      <rect x="0" y="260" width="400" height="140" fill="#f4d896"/>
+      <rect x="0" y="260" width="400" height="4" fill="#e0c080"/>
+      <rect x="30" y="180" width="8" height="120" fill="#6a4020"/>
+      <path d="M 34 180 Q 10 160 0 170 Q 15 170 34 185 Z" fill="#2a8a3a"/>
+      <path d="M 34 180 Q 60 155 75 165 Q 55 170 34 185 Z" fill="#3a9a4a"/>
+      <path d="M 34 180 Q 20 145 15 155 Q 25 160 34 185 Z" fill="#2a7a2a"/>
+      <path d="M 34 180 Q 50 140 60 150 Q 45 160 34 185 Z" fill="#3a8a3a"/>
+      <circle cx="20" cy="168" r="4" fill="#6a4020" stroke="#3a2010" stroke-width="1"/>
+      <circle cx="30" cy="165" r="4" fill="#6a4020" stroke="#3a2010" stroke-width="1"/>
+      <circle cx="25" cy="173" r="4" fill="#6a4020" stroke="#3a2010" stroke-width="1"/>
+      <rect x="360" y="190" width="8" height="110" fill="#6a4020"/>
+      <path d="M 364 190 Q 340 170 330 180 Q 345 180 364 195 Z" fill="#2a8a3a"/>
+      <path d="M 364 190 Q 390 165 400 175 Q 380 180 364 195 Z" fill="#3a9a4a"/>
+      <path d="M 364 190 Q 350 155 345 165 Q 355 170 364 195 Z" fill="#2a7a2a"/>
+      <circle cx="350" cy="173" r="4" fill="#6a4020" stroke="#3a2010" stroke-width="1"/>
+      <circle cx="358" cy="170" r="4" fill="#6a4020" stroke="#3a2010" stroke-width="1"/>
+    `;
+
+    case 'russell': return `
+      <defs>
+        <linearGradient id="skyRussell" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#4a8ad8"/>
+          <stop offset="100%" stop-color="#8ac0f0"/>
+        </linearGradient>
+      </defs>
+      <rect x="0" y="0" width="400" height="240" fill="url(#skyRussell)"/>
+      <circle cx="100" cy="80" r="35" fill="#fff3a0"/>
+      <circle cx="100" cy="80" r="50" fill="#ffd86b" opacity="0.3"/>
+      <ellipse cx="250" cy="50" rx="40" ry="12" fill="#fff" opacity="0.7"/>
+      <ellipse cx="320" cy="70" rx="50" ry="14" fill="#fff" opacity="0.6"/>
+      <path d="M 0 220 Q 100 200 200 215 Q 300 200 400 220 L 400 260 L 0 260 Z" fill="#5a9a4a"/>
+      <rect x="0" y="260" width="400" height="140" fill="#4a4a4a"/>
+      <rect x="0" y="260" width="400" height="6" fill="#00d2be"/>
+      <rect x="0" y="266" width="400" height="6" fill="#00a0a0"/>
+      ${[30,110,190,270,350].map(x => `<rect x="${x}" y="350" width="40" height="6" fill="#fff" opacity="0.8"/>`).join('')}
+      <rect x="30" y="180" width="10" height="90" fill="#5a4020"/>
+      <ellipse cx="35" cy="170" rx="25" ry="20" fill="#3a7a3a" stroke="#2a5a1a" stroke-width="1.5"/>
+      <ellipse cx="25" cy="160" rx="18" ry="15" fill="#4a8a4a" stroke="#2a5a1a" stroke-width="1.5"/>
+      <ellipse cx="45" cy="163" rx="16" ry="14" fill="#3a7a3a" stroke="#2a5a1a" stroke-width="1.5"/>
+      <rect x="360" y="190" width="8" height="80" fill="#5a4020"/>
+      <ellipse cx="364" cy="182" rx="20" ry="16" fill="#3a7a3a" stroke="#2a5a1a" stroke-width="1.5"/>
+      <ellipse cx="356" cy="175" rx="14" ry="12" fill="#4a8a4a" stroke="#2a5a1a" stroke-width="1.5"/>
+    `;
+
+    case 'alonso': return `
+      <defs>
+        <linearGradient id="skyAlonso" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#5a9ad8"/>
+          <stop offset="100%" stop-color="#a8d8ff"/>
+        </linearGradient>
+      </defs>
+      <rect x="0" y="0" width="400" height="220" fill="url(#skyAlonso)"/>
+      <circle cx="80" cy="70" r="30" fill="#fff3a0"/>
+      <circle cx="80" cy="70" r="45" fill="#ffd86b" opacity="0.3"/>
+      <path d="M 0 200 L 60 120 L 120 170 L 180 100 L 250 160 L 320 110 L 400 180 L 400 220 L 0 220 Z" fill="#6a7a9a"/>
+      <path d="M 0 220 L 80 150 L 150 200 L 230 140 L 300 190 L 400 160 L 400 240 L 0 240 Z" fill="#4a5a7a"/>
+      <path d="M 60 120 L 70 135 L 50 135 Z" fill="#fff"/>
+      <path d="M 180 100 L 195 120 L 165 120 Z" fill="#fff"/>
+      <path d="M 320 110 L 335 130 L 305 130 Z" fill="#fff"/>
+      <path d="M 0 240 Q 100 210 200 235 Q 300 215 400 240 L 400 280 L 0 280 Z" fill="#4a8a3a"/>
+      <rect x="0" y="260" width="400" height="140" fill="#6a5030"/>
+      <rect x="0" y="260" width="400" height="10" fill="#5a9a3a"/>
+      <rect x="340" y="200" width="30" height="20" fill="#c02020"/>
+      <rect x="340" y="206" width="30" height="8" fill="#ffd86b"/>
+      <rect x="338" y="195" width="2" height="30" fill="#3a2a1a"/>
+      <rect x="30" y="200" width="10" height="70" fill="#5a4020"/>
+      <ellipse cx="35" cy="195" rx="25" ry="20" fill="#4a7a3a" stroke="#2a5a1a" stroke-width="1.5"/>
+      <ellipse cx="25" cy="185" rx="18" ry="15" fill="#5a8a4a" stroke="#2a5a1a" stroke-width="1.5"/>
+      <ellipse cx="45" cy="188" rx="16" ry="14" fill="#4a7a3a" stroke="#2a5a1a" stroke-width="1.5"/>
+      <circle cx="28" cy="190" r="3" fill="#2a4a1a"/>
+      <circle cx="35" cy="185" r="3" fill="#2a4a1a"/>
+      <circle cx="42" cy="192" r="3" fill="#2a4a1a"/>
+      <circle cx="32" cy="198" r="3" fill="#2a4a1a"/>
+      <rect x="360" y="210" width="8" height="60" fill="#5a4020"/>
+      <ellipse cx="364" cy="205" rx="20" ry="16" fill="#4a7a3a" stroke="#2a5a1a" stroke-width="1.5"/>
+      <ellipse cx="356" cy="198" rx="14" ry="12" fill="#5a8a4a" stroke="#2a5a1a" stroke-width="1.5"/>
+    `;
+
+    case 'hamilton': return `
+      <defs>
+        <linearGradient id="skyHam" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#1a0a3a"/>
+          <stop offset="50%" stop-color="#3a1a6a"/>
+          <stop offset="100%" stop-color="#6a2a9a"/>
+        </linearGradient>
+      </defs>
+      <rect x="0" y="0" width="400" height="260" fill="url(#skyHam)"/>
+      <circle cx="50" cy="30" r="1" fill="#fff"/>
+      <circle cx="150" cy="50" r="1.5" fill="#fff"/>
+      <circle cx="250" cy="25" r="1" fill="#fff"/>
+      <circle cx="350" cy="45" r="1.5" fill="#fff"/>
+      <circle cx="330" cy="80" r="25" fill="#c94aff" opacity="0.8"/>
+      <circle cx="330" cy="80" r="35" fill="#c94aff" opacity="0.2"/>
+      <rect x="0" y="180" width="40" height="80" fill="#1a0a2a"/>
+      <rect x="40" y="150" width="50" height="110" fill="#2a1a4a"/>
+      <rect x="90" y="170" width="35" height="90" fill="#1a0a2a"/>
+      <rect x="125" y="130" width="55" height="130" fill="#3a1a5a"/>
+      <rect x="180" y="160" width="40" height="100" fill="#2a1a4a"/>
+      <rect x="220" y="140" width="50" height="120" fill="#1a0a2a"/>
+      <rect x="270" y="170" width="35" height="90" fill="#3a1a5a"/>
+      <rect x="305" y="150" width="45" height="110" fill="#2a1a4a"/>
+      <rect x="350" y="180" width="50" height="80" fill="#1a0a2a"/>
+      ${[55,70,85].map(x => `<rect x="${x}" y="170" width="4" height="6" fill="#c94aff"/>`).join('')}
+      ${[135,150,165].map(x => `<rect x="${x}" y="150" width="4" height="6" fill="#ff4a9a"/>`).join('')}
+      ${[230,245,260].map(x => `<rect x="${x}" y="160" width="4" height="6" fill="#4affff"/>`).join('')}
+      ${[315,330,345].map(x => `<rect x="${x}" y="170" width="4" height="6" fill="#c94aff"/>`).join('')}
+      <rect x="130" y="135" width="45" height="10" fill="none" stroke="#ff4a9a" stroke-width="1.5"/>
+      <text x="152" y="143" text-anchor="middle" font-size="8" fill="#ff4a9a" font-weight="bold">F1</text>
+      <rect x="225" y="145" width="40" height="10" fill="none" stroke="#4affff" stroke-width="1.5"/>
+      <rect x="0" y="260" width="400" height="140" fill="#1a0a2a"/>
+      <rect x="0" y="340" width="400" height="3" fill="#c94aff" opacity="0.8"/>
+      ${[30,110,190,270,350].map(x => `<rect x="${x}" y="370" width="40" height="5" fill="#c94aff" opacity="0.9"/>`).join('')}
+      <rect x="340" y="180" width="8" height="80" fill="#2a1a1a"/>
+      <ellipse cx="344" cy="170" rx="22" ry="18" fill="#1a3a2a" stroke="#0a2a1a" stroke-width="1.5"/>
+      <ellipse cx="335" cy="160" rx="16" ry="14" fill="#2a4a3a" stroke="#0a2a1a" stroke-width="1.5"/>
+      <ellipse cx="352" cy="162" rx="14" ry="12" fill="#1a3a2a" stroke="#0a2a1a" stroke-width="1.5"/>
+      <circle cx="338" cy="165" r="2" fill="#ff4a9a"/>
+      <circle cx="348" cy="170" r="2" fill="#4affff"/>
+      <circle cx="342" cy="175" r="2" fill="#c94aff"/>
+      <circle cx="350" cy="160" r="2" fill="#ffd86b"/>
+      <rect x="50" y="190" width="6" height="70" fill="#2a1a1a"/>
+      <ellipse cx="53" cy="182" rx="18" ry="15" fill="#1a3a2a" stroke="#0a2a1a" stroke-width="1.5"/>
+      <ellipse cx="46" cy="174" rx="13" ry="11" fill="#2a4a3a" stroke="#0a2a1a" stroke-width="1.5"/>
+      <circle cx="48" cy="178" r="2" fill="#ff4a9a"/>
+      <circle cx="56" cy="180" r="2" fill="#4affff"/>
+    `;
+
+    case 'senna': return `
+      <defs>
+        <linearGradient id="skySenna" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#4ab8e8"/>
+          <stop offset="70%" stop-color="#8ad8f0"/>
+          <stop offset="100%" stop-color="#c8e8a0"/>
+        </linearGradient>
+      </defs>
+      <rect x="0" y="0" width="400" height="240" fill="url(#skySenna)"/>
+      <circle cx="320" cy="80" r="35" fill="#fff3a0"/>
+      <circle cx="320" cy="80" r="50" fill="#ffd86b" opacity="0.3"/>
+      <ellipse cx="70" cy="60" rx="40" ry="12" fill="#fff" opacity="0.8"/>
+      <ellipse cx="180" cy="40" rx="50" ry="14" fill="#fff" opacity="0.7"/>
+      <path d="M 0 220 Q 100 180 200 210 Q 300 185 400 215 L 400 260 L 0 260 Z" fill="#6aaa4a"/>
+      <rect x="0" y="240" width="400" height="160" fill="#3a3a3a"/>
+      <rect x="0" y="240" width="400" height="6" fill="#1a8a3a"/>
+      <rect x="0" y="246" width="400" height="6" fill="#ffd81a"/>
+      ${[30,110,190,270,350].map(x => `<rect x="${x}" y="350" width="40" height="6" fill="#fff" opacity="0.8"/>`).join('')}
+      <rect x="20" y="170" width="3" height="80" fill="#5a3a1a"/>
+      <rect x="23" y="175" width="40" height="28" fill="#1a8a3a"/>
+      <path d="M 25 189 L 43 178 L 61 189 L 43 200 Z" fill="#ffd81a"/>
+      <circle cx="43" cy="189" r="6" fill="#1a3a8a"/>
+      <rect x="360" y="180" width="8" height="90" fill="#6a4020"/>
+      <path d="M 364 180 Q 340 160 330 170 Q 345 170 364 185 Z" fill="#2a8a3a"/>
+      <path d="M 364 180 Q 390 155 400 165 Q 380 170 364 185 Z" fill="#3a9a4a"/>
+      <path d="M 364 180 Q 350 145 345 155 Q 355 160 364 185 Z" fill="#2a7a2a"/>
+      <rect x="30" y="190" width="12" height="80" fill="#5a3020"/>
+      <ellipse cx="36" cy="180" rx="28" ry="22" fill="#1a6a2a" stroke="#0a4a1a" stroke-width="1.5"/>
+      <ellipse cx="22" cy="170" rx="20" ry="18" fill="#2a7a3a" stroke="#0a4a1a" stroke-width="1.5"/>
+      <ellipse cx="50" cy="172" rx="18" ry="16" fill="#1a6a2a" stroke="#0a4a1a" stroke-width="1.5"/>
+      <ellipse cx="36" cy="160" rx="15" ry="14" fill="#2a8a3a" stroke="#0a4a1a" stroke-width="1.5"/>
+      <circle cx="25" cy="175" r="4" fill="#ffd81a" stroke="#c99100" stroke-width="1"/>
+      <circle cx="38" cy="168" r="4" fill="#ffd81a" stroke="#c99100" stroke-width="1"/>
+      <circle cx="48" cy="178" r="4" fill="#ffd81a" stroke="#c99100" stroke-width="1"/>
+      <circle cx="30" cy="185" r="4" fill="#ffd81a" stroke="#c99100" stroke-width="1"/>
+      <circle cx="42" cy="162" r="3" fill="#ffd81a" stroke="#c99100" stroke-width="1"/>
+    `;
+  }
+  return '';
+}
+
+/* =========================================================
+   ГЛАЗА В СТИЛЕ MY LITTLE PONY
+   ========================================================= */
+function mlpEyes(eyeColor, eyeColorLight, eyeColorDark, pupilStyle) {
+  // pupilStyle: 'normal' | 'starry' (как у Шарнинга Армора)
+  let leftPupil = '', rightPupil = '';
+  if (pupilStyle === 'starry') {
+    // Звёздные зрачки — тёмные с золотыми звёздочками
+    leftPupil = `
+      <ellipse cx="172" cy="130" rx="7" ry="9" fill="#1a0a2a"/>
+      <polygon points="172,124 173.5,128 177,128 174,130.5 175,134 172,132 169,134 170,130.5 167,128 170.5,128" fill="#ffd81a"/>
+      <circle cx="174" cy="132" r="1" fill="#fff"/>
+    `;
+    rightPupil = `
+      <ellipse cx="228" cy="130" rx="7" ry="9" fill="#1a0a2a"/>
+      <polygon points="228,124 229.5,128 233,128 230,130.5 231,134 228,132 225,134 226,130.5 223,128 226.5,128" fill="#ffd81a"/>
+      <circle cx="230" cy="132" r="1" fill="#fff"/>
+    `;
+  } else {
+    leftPupil = `<ellipse cx="172" cy="130" rx="6" ry="8" fill="#000"/>`;
+    rightPupil = `<ellipse cx="228" cy="130" rx="6" ry="8" fill="#000"/>`;
+  }
+  return `
+    <!-- Левый глаз -->
+    <ellipse cx="170" cy="130" rx="18" ry="22" fill="#fff" stroke="#000" stroke-width="2.5"/>
+    <ellipse cx="172" cy="130" rx="14" ry="18" fill="${eyeColor}"/>
+    <ellipse cx="172" cy="128" rx="12" ry="15" fill="${eyeColorLight}"/>
+    <ellipse cx="172" cy="133" rx="10" ry="12" fill="${eyeColorDark}"/>
+    ${leftPupil}
+    <ellipse cx="176" cy="122" rx="5" ry="6" fill="#fff" opacity="0.95"/>
+    <ellipse cx="168" cy="136" rx="3" ry="4" fill="#fff" opacity="0.7"/>
+    <circle cx="178" cy="138" r="2" fill="#fff" opacity="0.85"/>
+    <!-- Ресницы -->
+    <path d="M 155 115 Q 160 110 165 112" stroke="#000" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <path d="M 165 112 Q 170 108 175 110" stroke="#000" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <path d="M 175 110 Q 180 108 185 112" stroke="#000" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    
+    <!-- Правый глаз -->
+    <ellipse cx="230" cy="130" rx="18" ry="22" fill="#fff" stroke="#000" stroke-width="2.5"/>
+    <ellipse cx="228" cy="130" rx="14" ry="18" fill="${eyeColor}"/>
+    <ellipse cx="228" cy="128" rx="12" ry="15" fill="${eyeColorLight}"/>
+    <ellipse cx="228" cy="133" rx="10" ry="12" fill="${eyeColorDark}"/>
+    ${rightPupil}
+    <ellipse cx="224" cy="122" rx="5" ry="6" fill="#fff" opacity="0.95"/>
+    <ellipse cx="232" cy="136" rx="3" ry="4" fill="#fff" opacity="0.7"/>
+    <circle cx="222" cy="138" r="2" fill="#fff" opacity="0.85"/>
+    <!-- Ресницы -->
+    <path d="M 215 112 Q 220 108 225 110" stroke="#000" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <path d="M 225 110 Q 230 108 235 112" stroke="#000" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <path d="M 235 112 Q 240 110 245 115" stroke="#000" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  `;
+}
+
+/* =========================================================
+   ДЕТАЛИЗИРОВАННЫЙ ЧИБИ-ГОНЩИК БЕЗ ШЛЕМА
+   ========================================================= */
+function chibiSVG(d) {
+  const c = d.colors;
+  return `
+<svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  ${backgroundScene(d.id)}
+
+  <ellipse cx="200" cy="375" rx="70" ry="10" fill="#000" opacity="0.35"/>
+
+  <!-- НОГИ -->
+  <rect x="168" y="310" width="26" height="55" rx="8" fill="${c.suitMain}" stroke="#000" stroke-width="2"/>
+  <rect x="206" y="310" width="26" height="55" rx="8" fill="${c.suitMain}" stroke="#000" stroke-width="2"/>
+  <rect x="168" y="335" width="26" height="4" fill="${c.suitAccent}"/>
+  <rect x="206" y="335" width="26" height="4" fill="${c.suitAccent}"/>
+  <ellipse cx="181" cy="370" rx="18" ry="9" fill="#1a1a1a" stroke="#000" stroke-width="2"/>
+  <ellipse cx="219" cy="370" rx="18" ry="9" fill="#1a1a1a" stroke="#000" stroke-width="2"/>
+  <ellipse cx="181" cy="367" rx="14" ry="4" fill="${c.suitAccent}"/>
+  <ellipse cx="219" cy="367" rx="14" ry="4" fill="${c.suitAccent}"/>
+
+  <!-- ТЕЛО -->
+  <path d="M 150 220 Q 145 200 160 195 L 240 195 Q 255 200 250 220 L 255 315 Q 255 325 245 325 L 155 325 Q 145 325 145 315 Z"
+        fill="${c.suitMain}" stroke="#000" stroke-width="2"/>
+  <line x1="200" y1="200" x2="200" y2="310" stroke="#000" stroke-width="1.5" opacity="0.5"/>
+  <rect x="150" y="235" width="100" height="6" fill="${c.suitAccent}"/>
+  <rect x="150" y="250" width="100" height="3" fill="${c.suitAccent}"/>
+  <circle cx="200" cy="275" r="12" fill="#fff" stroke="#000" stroke-width="1.5"/>
+  <text x="200" y="280" text-anchor="middle" font-size="14" font-weight="bold" fill="${c.suitMain}" font-family="Arial">${d.number}</text>
+  <rect x="160" y="295" width="30" height="8" rx="2" fill="${c.suitAccent}" opacity="0.8"/>
+  <rect x="210" y="295" width="30" height="8" rx="2" fill="#fff" opacity="0.7"/>
+
+  <!-- РУКИ -->
+  <path d="M 150 210 Q 125 215 120 250 Q 118 280 130 295 L 148 290 Q 140 275 142 250 Q 145 225 155 220 Z"
+        fill="${c.suitMain}" stroke="#000" stroke-width="2"/>
+  <path d="M 250 210 Q 275 205 285 230 Q 290 255 278 275 L 260 270 Q 268 255 265 235 Q 260 220 245 220 Z"
+        fill="${c.suitMain}" stroke="#000" stroke-width="2"/>
+  <rect x="125" y="245" width="22" height="4" fill="${c.suitAccent}" transform="rotate(-5 136 247)"/>
+  <rect x="262" y="240" width="22" height="4" fill="${c.suitAccent}" transform="rotate(10 273 242)"/>
+  <circle cx="133" cy="300" r="13" fill="${c.suitAccent}" stroke="#000" stroke-width="2"/>
+  <circle cx="275" cy="280" r="13" fill="${c.suitAccent}" stroke="#000" stroke-width="2"/>
+  <circle cx="129" cy="296" r="3" fill="#fff" opacity="0.5"/>
+  <circle cx="271" cy="276" r="3" fill="#fff" opacity="0.5"/>
+
+  <!-- ШЕЯ -->
+  <rect x="185" y="180" width="30" height="22" fill="${c.skin}" stroke="#000" stroke-width="2"/>
+  <ellipse cx="200" cy="195" rx="15" ry="4" fill="#000" opacity="0.2"/>
+
+  <!-- ВОЛОСЫ СЗАДИ -->
+  ${d.hairStyle}
+
+  <!-- ГОЛОВА -->
+  <circle cx="200" cy="130" r="72" fill="${c.skin}" stroke="#000" stroke-width="2"/>
+
+  <!-- УШИ -->
+  <ellipse cx="130" cy="135" rx="8" ry="12" fill="${c.skin}" stroke="#000" stroke-width="2"/>
+  <ellipse cx="130" cy="135" rx="3" ry="6" fill="#000" opacity="0.2"/>
+  <ellipse cx="270" cy="135" rx="8" ry="12" fill="${c.skin}" stroke="#000" stroke-width="2"/>
+  <ellipse cx="270" cy="135" rx="3" ry="6" fill="#000" opacity="0.2"/>
+
+  <!-- ВОЛОСЫ СПЕРЕДИ -->
+  ${d.hairFront}
+
+  <!-- ГЛАЗА В СТИЛЕ MLP -->
+  ${d.eyes}
+
+  <!-- НОС -->
+  <circle cx="200" cy="150" r="3" fill="#000" opacity="0.6"/>
+
+  <!-- РОТ -->
+  <path d="M 190 160 Q 200 166 210 160" stroke="#000" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+
+  <!-- РУМЯНА -->
+  <circle cx="158" cy="155" r="8" fill="#ff8080" opacity="0.5"/>
+  <circle cx="242" cy="155" r="8" fill="#ff8080" opacity="0.5"/>
+  <circle cx="156" cy="153" r="2.5" fill="#fff" opacity="0.6"/>
+  <circle cx="240" cy="153" r="2.5" fill="#fff" opacity="0.6"/>
+</svg>`;
+}
+
+/* =========================================================
+   ДАННЫЕ ГОНЩИКОВ
+   ========================================================= */
+const drivers = [
+  {
+    id: 'verstappen',
+    name: 'Макс Ферстаппен',
+    price: 0,
+    perClick: 1,
+    number: '1',
+    colors: {
+      suitMain: '#1a2a6c', suitAccent: '#ff6b1a',
+      skin: '#f4c9a0',
+    },
+    hairStyle: `
+      <path d="M 135 140 Q 125 170 135 195 L 150 190 Q 142 170 148 145 Z" fill="#5a3a1a" stroke="#000" stroke-width="1.5"/>
+      <path d="M 265 140 Q 275 170 265 195 L 250 190 Q 258 170 252 145 Z" fill="#5a3a1a" stroke="#000" stroke-width="1.5"/>
+      <path d="M 145 150 Q 138 175 145 195 L 155 190 Q 150 175 152 155 Z" fill="#4a2a10" stroke="#000" stroke-width="1"/>
+      <path d="M 255 150 Q 262 175 255 195 L 245 190 Q 250 175 248 155 Z" fill="#4a2a10" stroke="#000" stroke-width="1"/>
+    `,
+    hairFront: `
+      <path d="M 140 80 Q 150 70 165 75 Q 170 85 160 90 Q 150 88 145 85 Z" fill="#5a3a1a" stroke="#000" stroke-width="1.5"/>
+      <path d="M 235 75 Q 250 70 260 80 Q 255 90 245 88 Q 238 85 235 80 Z" fill="#5a3a1a" stroke="#000" stroke-width="1.5"/>
+      <path d="M 165 75 Q 180 68 200 72 Q 220 68 235 75 Q 230 85 215 82 Q 200 80 185 82 Q 170 85 165 75 Z" fill="#5a3a1a" stroke="#000" stroke-width="1.5"/>
+    `,
+    eyes: mlpEyes('#4a9ad8', '#7ac0f0', '#2a6aa0', 'normal')
+  },
+  {
+    id: 'norris',
+    name: 'Ландо Норрис',
+    price: 50,
+    perClick: 1.5,
+    number: '4',
+    colors: {
+      suitMain: '#ff8c1a', suitAccent: '#1a1a1a',
+      skin: '#f0c090',
+    },
+    hairStyle: `
+      <circle cx="135" cy="160" r="10" fill="#d4a050" stroke="#000" stroke-width="1.5"/>
+      <circle cx="145" cy="175" r="11" fill="#d4a050" stroke="#000" stroke-width="1.5"/>
+      <circle cx="138" cy="190" r="10" fill="#c09040" stroke="#000" stroke-width="1.5"/>
+      <circle cx="265" cy="160" r="10" fill="#d4a050" stroke="#000" stroke-width="1.5"/>
+      <circle cx="255" cy="175" r="11" fill="#d4a050" stroke="#000" stroke-width="1.5"/>
+      <circle cx="262" cy="190" r="10" fill="#c09040" stroke="#000" stroke-width="1.5"/>
+      <circle cx="150" cy="185" r="8" fill="#e0b060" stroke="#000" stroke-width="1"/>
+      <circle cx="250" cy="185" r="8" fill="#e0b060" stroke="#000" stroke-width="1"/>
+    `,
+    hairFront: `
+      <circle cx="150" cy="85" r="9" fill="#d4a050" stroke="#000" stroke-width="1.5"/>
+      <circle cx="165" cy="80" r="10" fill="#e0b060" stroke="#000" stroke-width="1.5"/>
+      <circle cx="180" cy="78" r="9" fill="#d4a050" stroke="#000" stroke-width="1.5"/>
+      <circle cx="195" cy="77" r="10" fill="#e0b060" stroke="#000" stroke-width="1.5"/>
+      <circle cx="210" cy="78" r="9" fill="#d4a050" stroke="#000" stroke-width="1.5"/>
+      <circle cx="225" cy="80" r="10" fill="#e0b060" stroke="#000" stroke-width="1.5"/>
+      <circle cx="240" cy="83" r="9" fill="#d4a050" stroke="#000" stroke-width="1.5"/>
+      <circle cx="250" cy="88" r="8" fill="#c09040" stroke="#000" stroke-width="1.5"/>
+    `,
+    eyes: mlpEyes('#6aaa4a', '#8ac06a', '#4a8a2a', 'normal')
+  },
+  {
+    id: 'russell',
+    name: 'Джордж Рассел',
+    price: 75,
+    perClick: 1.8,
+    number: '63',
+    colors: {
+      suitMain: '#00d2be', suitAccent: '#005a50',
+      skin: '#f2c89a',
+    },
+    hairStyle: `
+      <path d="M 135 140 Q 128 165 138 185 L 150 180 Q 142 165 148 145 Z" fill="#c9910a" stroke="#000" stroke-width="1.5"/>
+      <path d="M 265 140 Q 272 165 262 185 L 250 180 Q 258 165 252 145 Z" fill="#c9910a" stroke="#000" stroke-width="1.5"/>
+      <path d="M 145 150 Q 140 175 148 190 L 158 185 Q 152 170 155 155 Z" fill="#a8780a" stroke="#000" stroke-width="1"/>
+      <path d="M 255 150 Q 260 175 252 190 L 242 185 Q 248 170 245 155 Z" fill="#a8780a" stroke="#000" stroke-width="1"/>
+    `,
+    hairFront: `
+      <path d="M 140 78 Q 155 68 175 72 Q 185 78 175 85 Q 160 82 145 85 Z" fill="#c9910a" stroke="#000" stroke-width="1.5"/>
+      <path d="M 225 72 Q 245 68 260 78 Q 255 85 240 82 Q 230 80 225 78 Z" fill="#c9910a" stroke="#000" stroke-width="1.5"/>
+      <path d="M 175 72 Q 195 65 225 72 Q 220 82 200 80 Q 185 82 175 78 Z" fill="#d4a020" stroke="#000" stroke-width="1.5"/>
+    `,
+    eyes: mlpEyes('#3a8ad8', '#6ab0f0', '#1a5aa0', 'normal')
+  },
+  {
+    id: 'alonso',
+    name: 'Фернандо Алонсо',
+    price: 100,
+    perClick: 2,
+    number: '14',
+    colors: {
+      suitMain: '#0a5a4a', suitAccent: '#ff3a8a',
+      skin: '#d8a878',
+    },
+    hairStyle: `
+      <path d="M 135 140 Q 128 165 138 185 L 150 180 Q 142 165 148 145 Z" fill="#3a2a1a" stroke="#000" stroke-width="1.5"/>
+      <path d="M 265 140 Q 272 165 262 185 L 250 180 Q 258 165 252 145 Z" fill="#3a2a1a" stroke="#000" stroke-width="1.5"/>
+      <path d="M 140 155 Q 135 170 142 180" stroke="#c0c0c0" stroke-width="2" fill="none"/>
+      <path d="M 260 155 Q 265 170 258 180" stroke="#c0c0c0" stroke-width="2" fill="none"/>
+    `,
+    hairFront: `
+      <path d="M 145 82 Q 160 72 180 76 Q 185 82 175 86 Q 160 84 148 88 Z" fill="#3a2a1a" stroke="#000" stroke-width="1.5"/>
+      <path d="M 220 76 Q 240 72 255 82 Q 250 88 238 86 Q 225 84 220 80 Z" fill="#3a2a1a" stroke="#000" stroke-width="1.5"/>
+      <path d="M 180 76 Q 200 70 220 76 Q 215 84 200 82 Q 188 84 180 80 Z" fill="#4a3a2a" stroke="#000" stroke-width="1.5"/>
+      <path d="M 155 80 Q 162 78 168 80" stroke="#c0c0c0" stroke-width="1.5" fill="none"/>
+    `,
+    eyes: mlpEyes('#6a4a2a', '#8a6a4a', '#4a2a1a', 'normal')
+  },
+  {
+    id: 'hamilton',
+    name: 'Льюис Хэмилтон',
+    price: 115,
+    perClick: 10,
+    number: '44',
+    colors: {
+      suitMain: '#1a1a2a', suitAccent: '#c94aff',
+      skin: '#5a3a2a',
+    },
+    hairStyle: `
+      <path d="M 140 140 Q 130 180 135 220 Q 138 240 145 245" stroke="#1a0a0a" stroke-width="8" fill="none" stroke-linecap="round"/>
+      <path d="M 155 145 Q 148 185 152 225 Q 155 245 162 250" stroke="#1a0a0a" stroke-width="8" fill="none" stroke-linecap="round"/>
+      <path d="M 260 140 Q 270 180 265 220 Q 262 240 255 245" stroke="#1a0a0a" stroke-width="8" fill="none" stroke-linecap="round"/>
+      <path d="M 245 145 Q 252 185 248 225 Q 245 245 238 250" stroke="#1a0a0a" stroke-width="8" fill="none" stroke-linecap="round"/>
+      <path d="M 138 170 Q 136 190 138 210" stroke="#3a2a1a" stroke-width="2" fill="none"/>
+      <path d="M 262 170 Q 264 190 262 210" stroke="#3a2a1a" stroke-width="2" fill="none"/>
+    `,
+    hairFront: `
+      <path d="M 145 85 Q 140 100 142 120" stroke="#1a0a0a" stroke-width="6" fill="none" stroke-linecap="round"/>
+      <path d="M 155 82 Q 150 98 152 118" stroke="#1a0a0a" stroke-width="6" fill="none" stroke-linecap="round"/>
+      <path d="M 255 85 Q 260 100 258 120" stroke="#1a0a0a" stroke-width="6" fill="none" stroke-linecap="round"/>
+      <path d="M 245 82 Q 250 98 248 118" stroke="#1a0a0a" stroke-width="6" fill="none" stroke-linecap="round"/>
+    `,
+    eyes: mlpEyes('#5a3a1a', '#7a5a3a', '#3a1a0a', 'normal')
+  },
+  {
+    id: 'senna',
+    name: 'Айртон Сенна',
+    price: 1000,
+    perClick: 50,
+    number: '12',
+    colors: {
+      suitMain: '#ffd81a', suitAccent: '#1a8a3a',
+      skin: '#c89068',
+    },
+    hairStyle: `
+      <path d="M 130 135 Q 115 180 125 230 Q 130 250 140 255 L 155 250 Q 145 230 142 190 Q 140 160 148 140 Z"
+            fill="#1a0a0a" stroke="#000" stroke-width="1.5"/>
+      <path d="M 270 135 Q 285 180 275 230 Q 270 250 260 255 L 245 250 Q 255 230 258 190 Q 260 160 252 140 Z"
+            fill="#1a0a0a" stroke="#000" stroke-width="1.5"/>
+      <path d="M 125 170 Q 122 200 128 230" stroke="#3a2a1a" stroke-width="2" fill="none"/>
+      <path d="M 275 170 Q 278 200 272 230" stroke="#3a2a1a" stroke-width="2" fill="none"/>
+      <path d="M 145 145 Q 138 190 148 235" stroke="#1a0a0a" stroke-width="5" fill="none" stroke-linecap="round"/>
+      <path d="M 255 145 Q 262 190 252 235" stroke="#1a0a0a" stroke-width="5" fill="none" stroke-linecap="round"/>
+    `,
+    hairFront: `
+      <path d="M 140 80 Q 160 95 180 85 Q 170 105 150 105 Q 140 100 138 90 Z" fill="#1a0a0a" stroke="#000" stroke-width="1.5"/>
+      <path d="M 260 80 Q 240 95 220 85 Q 230 105 250 105 Q 260 100 262 90 Z" fill="#1a0a0a" stroke="#000" stroke-width="1.5"/>
+      <path d="M 150 90 Q 165 95 175 90" stroke="#3a2a1a" stroke-width="1.5" fill="none"/>
+    `,
+    // Глаза как у Шарнинга Армора — тёмно-фиолетовые с золотыми звёздными зрачками
+    eyes: mlpEyes('#4a2a6a', '#6a4a8a', '#2a1a4a', 'starry')
+  }
+];
+
+/* =========================================================
+   СОСТОЯНИЕ И ЛОГИКА
+   ========================================================= */
+let state = { coins: 0, owned: ['verstappen'], current: 'verstappen' };
+
+try {
+  const saved = localStorage.getItem('f1Clicker4');
+  if (saved) state = { ...state, ...JSON.parse(saved) };
+} catch(e) {}
+
+function save() {
+  try { localStorage.setItem('f1Clicker4', JSON.stringify(state)); } catch(e) {}
+}
+
+function getCurrentDriver() {
+  return drivers.find(d => d.id === state.current);
+}
+
+function formatCoins(n) {
+  return Number.isInteger(n) ? n : n.toFixed(1);
+}
+
+// Мини-аватар для магазина (без шлема, с лицом)
+function miniAvatar(d) {
+  const c = d.colors;
+  return `
+<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <rect x="0" y="0" width="100" height="100" fill="${c.suitMain}" opacity="0.3"/>
+  <circle cx="50" cy="50" r="50" fill="${c.suitMain}" opacity="0.2"/>
+  <!-- Шея -->
+  <rect x="42" y="62" width="16" height="12" fill="${c.skin}" stroke="#000" stroke-width="1"/>
+  <!-- Голова -->
+  <circle cx="50" cy="50" r="28" fill="${c.skin}" stroke="#000" stroke-width="1.5"/>
+  <!-- Волосы сзади (упрощённо) -->
+  ${d.id === 'hamilton' ? `
+    <path d="M 28 50 Q 22 70 28 85" stroke="#1a0a0a" stroke-width="4" fill="none" stroke-linecap="round"/>
+    <path d="M 72 50 Q 78 70 72 85" stroke="#1a0a0a" stroke-width="4" fill="none" stroke-linecap="round"/>
+  ` : d.id === 'senna' ? `
+    <path d="M 25 48 Q 18 70 25 88 L 35 85 Q 30 70 32 52 Z" fill="#1a0a0a"/>
+    <path d="M 75 48 Q 82 70 75 88 L 65 85 Q 70 70 68 52 Z" fill="#1a0a0a"/>
+  ` : d.id === 'norris' ? `
+    <circle cx="28" cy="55" r="5" fill="#d4a050" stroke="#000" stroke-width="0.8"/>
+    <circle cx="32" cy="65" r="5" fill="#d4a050" stroke="#000" stroke-width="0.8"/>
+    <circle cx="72" cy="55" r="5" fill="#d4a050" stroke="#000" stroke-width="0.8"/>
+    <circle cx="68" cy="65" r="5" fill="#d4a050" stroke="#000" stroke-width="0.8"/>
+  ` : d.id === 'russell' ? `
+    <path d="M 25 50 Q 22 65 28 75 L 35 72 Q 30 62 32 52 Z" fill="#c9910a" stroke="#000" stroke-width="0.8"/>
+    <path d="M 75 50 Q 78 65 72 75 L 65 72 Q 70 62 68 52 Z" fill="#c9910a" stroke="#000" stroke-width="0.8"/>
+  ` : d.id === 'alonso' ? `
+    <path d="M 25 50 Q 22 65 28 75 L 35 72 Q 30 62 32 52 Z" fill="#3a2a1a" stroke="#000" stroke-width="0.8"/>
+    <path d="M 75 50 Q 78 65 72 75 L 65 72 Q 70 62 68 52 Z" fill="#3a2a1a" stroke="#000" stroke-width="0.8"/>
+  ` : `
+    <path d="M 25 50 Q 22 65 28 75 L 35 72 Q 30 62 32 52 Z" fill="#5a3a1a" stroke="#000" stroke-width="0.8"/>
+    <path d="M 75 50 Q 78 65 72 75 L 65 72 Q 70 62 68 52 Z" fill="#5a3a1a" stroke="#000" stroke-width="0.8"/>
+  `}
+  <!-- Волосы спереди -->
+  ${d.id === 'norris' ? `
+    <circle cx="35" cy="32" r="4" fill="#d4a050" stroke="#000" stroke-width="0.8"/>
+    <circle cx="45" cy="28" r="4.5" fill="#e0b060" stroke="#000" stroke-width="0.8"/>
+    <circle cx="55" cy="28" r="4.5" fill="#d4a050" stroke="#000" stroke-width="0.8"/>
+    <circle cx="65" cy="32" r="4" fill="#e0b060" stroke="#000" stroke-width="0.8"/>
+  ` : d.id === 'hamilton' ? `
+    <path d="M 30 35 Q 28 45 30 55" stroke="#1a0a0a" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <path d="M 70 35 Q 72 45 70 55" stroke="#1a0a0a" stroke-width="3" fill="none" stroke-linecap="round"/>
+  ` : d.id === 'senna' ? `
+    <path d="M 32 30 Q 45 40 55 35 Q 48 45 38 42 Z" fill="#1a0a0a" stroke="#000" stroke-width="0.8"/>
+    <path d="M 68 30 Q 55 40 45 35 Q 52 45 62 42 Z" fill="#1a0a0a" stroke="#000" stroke-width="0.8"/>
+  ` : d.id === 'russell' ? `
+    <path d="M 30 30 Q 45 25 55 28 Q 50 35 38 33 Z" fill="#c9910a" stroke="#000" stroke-width="0.8"/>
+    <path d="M 55 28 Q 65 25 70 30 Q 65 35 58 33 Z" fill="#d4a020" stroke="#000" stroke-width="0.8"/>
+  ` : d.id === 'alonso' ? `
+    <path d="M 32 30 Q 45 26 55 30 Q 50 36 38 34 Z" fill="#3a2a1a" stroke="#000" stroke-width="0.8"/>
+    <path d="M 55 30 Q 65 26 68 30 Q 65 36 58 34 Z" fill="#3a2a1a" stroke="#000" stroke-width="0.8"/>
+  ` : `
+    <path d="M 32 30 Q 45 25 55 28 Q 50 35 38 33 Z" fill="#5a3a1a" stroke="#000" stroke-width="0.8"/>
+    <path d="M 55 28 Q 65 25 68 30 Q 65 35 58 33 Z" fill="#5a3a1a" stroke="#000" stroke-width="0.8"/>
+  `}
+  <!-- Мини-глаза MLP -->
+  <ellipse cx="40" cy="52" rx="5" ry="6.5" fill="#fff" stroke="#000" stroke-width="1"/>
+  <ellipse cx="41" cy="52" rx="3.5" ry="5" fill="${d.id === 'senna' ? '#4a2a6a' : d.id === 'hamilton' ? '#5a3a1a' : d.id === 'alonso' ? '#6a4a2a' : d.id === 'norris' ? '#6aaa4a' : d.id === 'russell' ? '#3a8ad8' : '#4a9ad8'}"/>
+  ${d.id === 'senna' ? `
+    <ellipse cx="41" cy="52" rx="2" ry="2.5" fill="#1a0a2a"/>
+    <polygon points="41,50 41.5,51.5 42.5,51.5 41.7,52.2 42,53 41,52.5 40,53 40.3,52.2 39.5,51.5 40.5,51.5" fill="#ffd81a"/>
+  ` : `
+    <ellipse cx="41" cy="52" rx="1.8" ry="2.3" fill="#000"/>
+  `}
+  <ellipse cx="42" cy="50" rx="1.5" ry="2" fill="#fff" opacity="0.9"/>
+  
+  <ellipse cx="60" cy="52" rx="5" ry="6.5" fill="#fff" stroke="#000" stroke-width="1"/>
+  <ellipse cx="59" cy="52" rx="3.5" ry="5" fill="${d.id === 'senna' ? '#4a2a6a' : d.id === 'hamilton' ? '#5a3a1a' : d.id === 'alonso' ? '#6a4a2a' : d.id === 'norris' ? '#6aaa4a' : d.id === 'russell' ? '#3a8ad8' : '#4a9ad8'}"/>
+  ${d.id === 'senna' ? `
+    <ellipse cx="59" cy="52" rx="2" ry="2.5" fill="#1a0a2a"/>
+    <polygon points="59,50 59.5,51.5 60.5,51.5 59.7,52.2 60,53 59,52.5 58,53 58.3,52.2 57.5,51.5 58.5,51.5" fill="#ffd81a"/>
+  ` : `
+    <ellipse cx="59" cy="52" rx="1.8" ry="2.3" fill="#000"/>
+  `}
+  <ellipse cx="58" cy="50" rx="1.5" ry="2" fill="#fff" opacity="0.9"/>
+  
+  <!-- Ресницы мини -->
+  <path d="M 35 46 Q 37 44 39 45" stroke="#000" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+  <path d="M 61 45 Q 63 44 65 46" stroke="#000" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+  
+  <!-- Нос-точка -->
+  <circle cx="50" cy="60" r="1.5" fill="#000" opacity="0.6"/>
+  <!-- Рот -->
+  <path d="M 45 66 Q 50 69 55 66" stroke="#000" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+  <!-- Румяна -->
+  <circle cx="38" cy="64" r="2.5" fill="#ff8080" opacity="0.5"/>
+  <circle cx="62" cy="64" r="2.5" fill="#ff8080" opacity="0.5"/>
+</svg>`;
+}
+
+function render() {
+  document.getElementById('coinCount').textContent = formatCoins(state.coins);
+  const cur = getCurrentDriver();
+  document.getElementById('currentName').textContent = cur.name;
+  const word = cur.perClick === 1 ? 'монетка' : 'монеток';
+  document.getElementById('perClick').textContent = `+${formatCoins(cur.perClick)} ${word} за клик`;
+
+  document.getElementById('sceneContainer').innerHTML =
+    `<div class="scene" onclick="clickDriver(event)">${chibiSVG(cur)}</div>`;
+
+  const shop = document.getElementById('shopList');
+  shop.innerHTML = '';
+  drivers.forEach(d => {
+    const owned = state.owned.includes(d.id);
+    const isCurrent = state.current === d.id;
+    const canAfford = state.coins >= d.price;
+
+    const card = document.createElement('div');
+    card.className = 'driver-card' + (isCurrent ? ' active' : '') + (owned ? ' owned' : '');
+
+    let btnHtml;
+    if (d.price === 0) {
+      btnHtml = `<button class="buy-btn selected" disabled>Старт</button>`;
+    } else if (!owned) {
+      btnHtml = `<button class="buy-btn" ${canAfford ? '' : 'disabled'} onclick="buyDriver('${d.id}')">🪙 ${d.price}</button>`;
+    } else if (isCurrent) {
+      btnHtml = `<button class="buy-btn selected" disabled>Активен</button>`;
+    } else {
+      btnHtml = `<button class="buy-btn select" onclick="selectDriver('${d.id}')">Выбрать</button>`;
+    }
+
+    card.innerHTML = `
+      <div class="mini-scene">${miniAvatar(d)}</div>
+      <div class="driver-info">
+        <div class="name">${d.name}</div>
+        <div class="stats">+${formatCoins(d.perClick)} / клик</div>
+        ${d.price > 0 ? `<div class="price">Цена: ${d.price} 🪙</div>` : ''}
+      </div>
+      ${btnHtml}
+    `;
+    shop.appendChild(card);
+  });
+}
+
+function clickDriver(event) {
+  const cur = getCurrentDriver();
+  state.coins += cur.perClick;
+  state.coins = Math.round(state.coins * 10) / 10;
+
+  const scene = document.querySelector('.scene');
+  scene.classList.remove('bounce');
+  void scene.offsetWidth;
+  scene.classList.add('bounce');
+
+  const area = document.getElementById('clickArea');
+  const rect = area.getBoundingClientRect();
+  const coin = document.createElement('div');
+  coin.className = 'float-coin';
+  coin.textContent = `+${formatCoins(cur.perClick)} 🪙`;
+  coin.style.left = (event.clientX - rect.left - 20) + 'px';
+  coin.style.top = (event.clientY - rect.top - 20) + 'px';
+  area.appendChild(coin);
+  setTimeout(() => coin.remove(), 1000);
+
+  save();
+  render();
+}
+
+function buyDriver(id) {
+  const d = drivers.find(x => x.id === id);
+  if (!d || state.owned.includes(id) || state.coins < d.price) return;
+  state.coins -= d.price;
+  state.coins = Math.round(state.coins * 10) / 10;
+  state.owned.push(id);
+  state.current = id;
+  save();
+  render();
+}
+
+function selectDriver(id) {
+  if (!state.owned.includes(id)) return;
+  state.current = id;
+  save();
+  render();
+}
+
+function resetGame() {
+  if (!confirm('Точно сбросить весь прогресс?')) return;
+  state = { coins: 0, owned: ['verstappen'], current: 'verstappen' };
+  save();
+  render();
+}
+
+render();
+</script>
+
+</body>
+</html>
